@@ -3,15 +3,13 @@
 #include <time.h>
 #include <string.h> // Include this header for strcpy
 
-#define MaxDeuren 4
+#define MaxDeuren 4 // max aantal deuren in een kamer.
 
 typedef struct Room{
-	 // max aantal deuren in een kamer.
 	int room_id;
     Monster *monster;
 	Items *Item;
 	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
-
 } Room;
 
 typedef struct Items{ // structuur voor alle items in de Dungeon spel.
@@ -35,6 +33,7 @@ typedef struct Speeler{ // structuur voor de speler.
 
 Room *maakRooms(int room_id); //de functie die de kamers maakt.
 void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers met elkaar verbind.
+void MaakDungeon(Room** rooms, int numRooms); //de functie die de dungeon maakt.
 
 int main(){ //de main.
 
@@ -48,7 +47,6 @@ Room *maakRooms(int room_id){
 	for (int i = 0; i < 4; i++){
 		room -> doors[i] = NULL; // maak de deuren leeg.
 	}
-	
 	return room; // geef de kamer terug.
 }
 
@@ -61,6 +59,22 @@ void Roomconnection(Room *r_nu, Room *r_volgende){ //de functie die de kamers me
 		}
 	}
 }
+
+void MaakDungeon(Room** rooms, int numRooms) {
+	srand(time(NULL)); // Initialiseer de random number generator
+	int numRooms = rand() % 25; // aantal kamers in de dungeon.
+	if (numRooms < 8) {
+		numRooms = 8; // Zorg ervoor dat er altijd minimaal 2 kamers zijn.
+	}
+	
+	for (int i = 0; i < numRooms; i++) {
+		rooms[i] = createRoom(i);
+	}
+	for (int i = 0; i < numRooms - 1; i++) {
+		connectRooms(rooms[i], rooms[i + 1]);
+	}
+}
+
 
 
 

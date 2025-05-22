@@ -35,7 +35,7 @@ typedef struct Speeler{ // structuur voor de speler.
 	int stamina;
 } Player;
 
-Room *maakRooms(int room_id); //de functie die de kamers maakt.
+Room *maakRooms(int x_as,int y_as); //de functie die de kamers maakt.
 void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers met elkaar verbind.
 void MaakDungeon(Room** rooms, int numRooms); //de functie die de dungeon maakt.
 int roomIdTeller = 0; // teller voor de kamer id's.

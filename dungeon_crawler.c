@@ -22,7 +22,7 @@ typedef struct Items{ // structuur voor alle items in de Dungeon spel.
 	int StaminaPotion;
 } Items;
 
-typedef struct Monsters{ //sturctuur voor de monster.
+typedef struct Monster{ //sturctuur voor de monster.
     char naam[15];
 	int healt;
 	int damage;
@@ -45,7 +45,7 @@ int main(){ //de main.
 }
 
 Room *maakRooms(int x_as,int y_as){
-	
+
 	Room *room = (Room*)malloc(sizeof(Room)); // maak een nieuwe kamer aan.
 	room -> room_id = roomIdTeller++; // geef de kamer een id.
 	room -> x = x_as; // geef de kamer een x coördinaat.
@@ -63,37 +63,17 @@ Room *maakRooms(int x_as,int y_as){
 	return room; // geef de kamer terug.
 }
 
-void Roomconnection(Room *r_nu, Room *r_volgende){ //de functie die de kamers met elkaar verbind.
+void Connecteren_Van_Rooms(Room *r_nu, Room *r_volgende){ //de functie die de kamers met elkaar verbind.
 	// maak een verbinding tussen de kamers.
-	for(int i = 0; i < MaxDeuren; i++){
-		if(r_nu -> doors[i] == NULL){
-			r_nu -> doors[i] = r_volgende;
-			break;
+	for(int i = 0; i < r_nu->doorCount; i++){
+		if(r_nu -> doors[i] == r_volgende){
+			return;
 		}
-	}
-}
-
-void MaakDungeon(Room** rooms, int numRooms) {
-	srand(time(NULL)); // Initialiseer de random number generator
-	int numRooms = rand() % 25; // aantal kamers in de dungeon.
-	if (numRooms < 8) {
-		numRooms = 8; // Zorg ervoor dat er altijd minimaal 2 kamers zijn.
-	}
-	
-	for (int i = 0; i < numRooms; i++) {
-		rooms[i] = createRoom(i);
-	}
-	for (int i = 0; i < numRooms - 1; i++) {
-		connectRooms(rooms[i], rooms[i + 1]);
-	}
-}
-
-void InfoRoom_printen(Room *room){
-	if (room -> room_id == 0){
-		printf("You are int the start room.\n");
-	}
-	else{
-		printf("You are in room %d.\n", room -> room_id);
+		if(r_nu -> doorCount < MaxDeuren && r_volgende -> doorCount<MaxDeuren){
+			r_nu->doors[r_nu->doorCount++] = r_volgende; 
+			r_volgende->doors[r_volgende->doorCount++] = r_nu; 
+			return;
+		}
 	}
 }
 

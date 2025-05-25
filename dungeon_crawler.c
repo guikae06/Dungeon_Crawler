@@ -57,15 +57,18 @@ int neighbors[4][2] = {
 };
 
 // Functieprototypes
+void choosedificulty(char *difficulty, int *h, int *w);
 Room *maakRooms(int x_as,int y_as); //de functie die de kamers maakt.
 void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers met elkaar verbind.
-void MaakDungeon(Room** rooms, int numRooms); //de functie die de dungeon maakt.
 void generateConnectedDungeon();
-
+void findLongestPathFromStart();
+void printRoomInfo(Room* room); //de functie die de informatie van de kamer print.
+void printDungeon(); //de functie die de Dungeon print.
 
 int main(){ //de main.
 
 }
+
 
 Room *maakRooms(int x_as,int y_as){
 
@@ -98,6 +101,33 @@ void Connecteren_Van_Rooms(Room *r_nu, Room *r_volgende){ //de functie die de ka
 		r_volgende->doors[r_volgende->doorCount++] = r_nu; 
 		return;
 	}
+}
+
+void choosedificulty(char *difficulty, int *h, int *w) {
+    printf("Choose difficulty:\n");
+    printf("1. Easy\n2. Medium\n3. Hard\n4. Hardcore\n ");
+    scanf("%s", difficulty);
+    getchar(); // consume newline
+    if (strcmp(difficulty, "1") == 0|| strcmp(difficulty, "Easy") == 0|| strcmp(difficulty, "easy") == 0) {
+        printf("You chose Easy difficulty.\n");
+        *h = 5;
+		*w = 5;
+    } else if (strcmp(difficulty, "2") == 0|| strcmp(difficulty, "Medium") == 0|| strcmp(difficulty, "medium") == 0) {
+        printf("You chose Medium difficulty.\n");
+        *h =20;
+		*w = 10;
+    } else if (strcmp(difficulty, "3") == 0|| strcmp(difficulty, "hard") == 0|| strcmp(difficulty, "Hard") == 0) {
+        printf("You chose Hard difficulty.\n");
+        *h = 15;
+		*w = 15;
+    } else if (strcmp(difficulty, "4") == 0|| strcmp(difficulty, "Hardcore") == 0|| strcmp(difficulty, "hardcore") == 0) {
+        printf("You chose Hardcore difficulty.\n");
+        *h = 20;
+		*w = 20;
+    } else {
+        printf("Invalid choice. Defaulting to Easy.\n");
+        
+    }
 }
 
 void generateConnectedDungeon() {

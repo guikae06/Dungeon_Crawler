@@ -65,7 +65,122 @@ void combat(Player* player, Monster* monster);
 void printDungeon(); //de functie die de Dungeon print.
 
 int main(){ //de main.
+srand(time(NULL));
 
+    char difficulty[15];
+    choosedificulty(difficulty, &GRID_HEIGHT, &GRID_WIDTH);
+
+    generateConnectedDungeon();
+    findLongestPathFromStart();
+
+    Player player;
+    player.currentRoom = startRoom;
+    player.hp = 100;
+    player.damage = 10;
+    player.stamina = 100;
+
+    const char* monsterNames[] = {"Goblin", "Orc", "Skeleton"};
+    const int monsterHPs[] = {20, 40, 30};
+    const int monsterDamages[] = {5, 10, 7};
+    const int monsterStamina[] = {20, 30, 25};
+
+    const char* itemNames[] = {"Healing Potion", "Stamina Drink", "Sword"};
+    Item* items[] = {
+        &(Item){"Healing Potion", 20, 0, 0},
+        &(Item){"Stamina Drink", 0, 20, 0},
+        &(Item){"Sword", 0, 0, 5},
+    };
+
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            Room* r = grid[y][x];
+            if (r && r != startRoom && r != endRoom) {
+                int spawnMonster = rand() % 4; // 25%
+                int spawnItem = rand() % 5;    // 20%
+
+                if (spawnMonster == 0) {
+                    int m = rand() % 3;
+                    Monster* mon = malloc(sizeof(Monster));
+                    strcpy(mon->naam, monsterNames[m]);
+                    mon->hp = monsterHPs[m];
+                    mon->damage = monsterDamages[m];
+                    mon->stamina = monsterStamina[m];
+                    r->monster = mon;
+                }
+                if (spawnItem == 0) {
+                    int i = rand() % 3;
+                    r->Item = items[i];
+                }
+            }
+        }
+    }
+
+    printf("Welcome to the Dungeon Crawler!\n");
+    printf("S = Start room, X = End room, O = Other room\n");
+    printDungeon();// Uncomment to print the dungeon layout
+
+    char input[10];
+    while (1) {
+        printRoomInfo(player.currentRoom);
+        if (player.currentRoom == endRoom) {
+            printf("You reached the final room! You win!\n");
+            break;
+        }
+        if (player.currentRoom->monster) {
+            printf("A monster blocks your path!\n");
+            combat(&player, player.currentRoom->monster);
+            if (player.hp <= 0) {
+                printf("Game Over.\n");
+                break;
+            }
+            free(player.currentRoom->monster);
+            player.currentRoom->monster = NULL;
+        }
+        if (player.currentRoom->Item) {
+            printf("You found a %s! Use it? (y/n): ", player.currentRoom->Item->naam);
+            //fgets(input, sizeof(input), stdin);
+            scanf("%s", input);
+            if (input[0] == 'y' || input[0] == 'Y') {
+                player.hp += player.currentRoom->Item->hpRestore;
+                player.stamina += player.currentRoom->Item->staminaRestore;
+                player.damage += player.currentRoom->Item->damageBoost;
+                printf("You used the %s.\n", player.currentRoom->Item->naam);
+                player.currentRoom->Item = NULL;
+            }
+        }
+        printf("Enter room id to move to (doors only), or -1, q or quit to exit: ");
+        scanf("%s", input);
+        //fgets(input, sizeof(input), stdin);
+        if (input[0] == 'q' || input[0] == 'Q'|| strcmp(input, "-1") == 0 || strcmp(input, "quit") == 0) {
+            printf("Goodbye!\n");
+            break;
+        }
+        int nextId = atoi(input);
+        Room* nextRoom = NULL;
+        for (int i = 0; i < player.currentRoom->doorCount; i++) {
+            if (player.currentRoom->doors[i]->room_id == nextId) {
+                nextRoom = player.currentRoom->doors[i];
+                break;
+            }
+        }
+        if (nextRoom) {
+            player.currentRoom = nextRoom;
+        } else {
+            printf("Invalid room.\n");
+        }
+    }
+
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            Room* r = grid[y][x];
+            if (r) {
+                if (r->monster) free(r->monster);
+                free(r);
+            }
+        }
+    }
+
+    return 0;
 }
 
 void choosedificulty(char *difficulty, int *h, int *w) {

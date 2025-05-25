@@ -162,9 +162,55 @@ void printRoomInfo(Room* room) {
 
 
 
-void print_Dungeon(){
-	
+void printDungeon() {
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        // Print kamers en horizontale deuren
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x]) {
+                if (grid[y][x] == startRoom)
+                    printf("S");
+                else if (grid[y][x] == endRoom)
+                    printf("X");
+                else
+                    printf("O");
+
+                // Print horizontale verbinding (deur) als deze bestaat met kamer rechts
+                if (x < GRID_WIDTH - 1 && grid[y][x + 1]) {
+                    int connected = 0;
+                    for (int i = 0; i < grid[y][x]->doorCount; i++) {
+                        if (grid[y][x]->doors[i] == grid[y][x + 1]) connected = 1;
+                    }
+                    printf(connected ? " - " : "   ");
+                } else {
+                    printf("   ");
+                }
+            } else {
+                // Geen kamer, print lege ruimte
+                printf("    ");
+            }
+        }
+        printf("\n");
+
+        // Print verticale deuren onder kamers
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x]) {
+                if (y < GRID_HEIGHT - 1 && grid[y + 1][x]) {
+                    int connected = 0;
+                    for (int i = 0; i < grid[y][x]->doorCount; i++) {
+                        if (grid[y][x]->doors[i] == grid[y + 1][x]) connected = 1;
+                    }
+                    printf(connected ? "|   " : "    ");
+                } else {
+                    printf("    ");
+                }
+            } else {
+                printf("    ");
+            }
+        }
+        printf("\n");
+    }
 }
+
 
 
 

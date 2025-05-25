@@ -12,25 +12,27 @@ typedef struct Room{
 	int distance; // afstand van de kamer tot de start kamer.
 	int doorCount; // aantal deuren in de kamer.
     Monster *monster;
-	Items *Item;
+	Item *Item;
 	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
 } Room;
 
-typedef struct Items{ // structuur voor alle items in de Dungeon spel.
-    char naam[20];
-    int HealtPotion;
-	int StaminaPotion;
-} Items;
+typedef struct Item{ // structuur voor alle items in de Dungeon spel.
+    char name[20];
+    int hpRestore;
+    int staminaRestore;
+    int damageBoost;
+} Item;
 
 typedef struct Monster{ //sturctuur voor de monster.
     char naam[15];
-	int healt;
+	int hp;
 	int damage;
 	int stamina;
 } Monster;
 
 typedef struct Speeler{ // structuur voor de speler.
-	int healt;
+	Room *currentRoom; // de kamer waar de speler zich in bevindt.
+	int hp;
 	int damage;
 	int stamina;
 } Player;
@@ -77,6 +79,9 @@ void Connecteren_Van_Rooms(Room *r_nu, Room *r_volgende){ //de functie die de ka
 	}
 }
 
+void print_Dungeon(){
+	
+}
 
 
 

@@ -17,7 +17,7 @@ typedef struct Room{
 } Room;
 
 typedef struct Item{ // structuur voor alle items in de Dungeon spel.
-    char name[20];
+    char naam[20];
     int hpRestore;
     int staminaRestore;
     int damageBoost;
@@ -146,7 +146,17 @@ void generateConnectedDungeon() {
     }
 }
 
-
+void printRoomInfo(Room* room) {
+    printf("You are in room %d at (%d,%d).\n", room->room_id, room->x, room->y);
+    if (room->monster)
+        printf("There is a %s in the room!\n", room->monster->naam);
+    if (room->Item)
+        printf("You see a %s.\n", room->Item->naam);
+    printf("Doors lead to rooms: ");
+    for (int i = 0; i < room->doorCount; i++)
+        printf("%d ", room->doors[i]->room_id);
+    printf("\n");
+}
 
 
 

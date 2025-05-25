@@ -37,9 +37,20 @@ typedef struct Speeler{ // structuur voor de speler.
 	int stamina;
 } Player;
 
+int GRID_HEIGHT = 5;
+int GRID_WIDTH = 5;
+
+Room* grid[100][100];
 int roomIdTeller = 0; // teller voor de kamer id's.
+Room* startRoom = NULL;
+Room* endRoom = NULL;
 
-
+int neighbors[4][2] = {
+    {0, 1},   // down
+    {1, 0},   // right
+    {0, -1},  // up
+    {-1, 0}   // left
+};
 
 // Functieprototypes
 Room *maakRooms(int x_as,int y_as); //de functie die de kamers maakt.

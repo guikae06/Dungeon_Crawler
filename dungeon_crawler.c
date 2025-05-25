@@ -172,7 +172,7 @@ void generateConnectedDungeon() {
             int ny = potentialNeighbors[i][1];
             Room* newRoom = maakRooms(nx, ny);
             grid[ny][nx] = newRoom;
-            maakRooms(current, newRoom);
+            Connecteren_Van_Rooms(current, newRoom);
             stack[stackSize++] = newRoom;
         }
     }

@@ -4,17 +4,8 @@
 #include <string.h> // Include this header for strcpy
 
 #define MaxDeuren 4 // max aantal deuren in een kamer.
-
-typedef struct Room{
-	int room_id;
-	int x, y; // x en y coördinaten van de kamer.
-	int visited; // of de kamer al bezocht is.
-	int distance; // afstand van de kamer tot de start kamer.
-	int doorCount; // aantal deuren in de kamer.
-    Monster *monster;
-	Item *Item;
-	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
-} Room;
+#define MAX_QUEUE   1000
+#define MIN_DISTANCE_FOR_END 8 // minimale afstand voor de eind kamer.
 
 typedef struct Item{ // structuur voor alle items in de Dungeon spel.
     char naam[20];
@@ -29,6 +20,19 @@ typedef struct Monster{ //sturctuur voor de monster.
 	int damage;
 	int stamina;
 } Monster;
+
+typedef struct Room{
+	int room_id;
+	int x, y; // x en y coördinaten van de kamer.
+	int visited; // of de kamer al bezocht is.
+	int distance; // afstand van de kamer tot de start kamer.
+	int doorCount; // aantal deuren in de kamer.
+    Monster *monster;
+	Item *Item;
+	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
+} Room;
+
+
 
 typedef struct Speeler{ // structuur voor de speler.
 	Room *currentRoom; // de kamer waar de speler zich in bevindt.
@@ -65,7 +69,7 @@ int main(){ //de main.
 
 Room *maakRooms(int x_as,int y_as){
 
-	Room *room = (Room*)malloc(sizeof(Room)); // maak een nieuwe kamer aan.
+	Room *room = malloc(sizeof(Room)); // maak een nieuwe kamer aan.
 	room -> room_id = roomIdTeller++; // geef de kamer een id.
 	room -> x = x_as; // geef de kamer een x coördinaat.
 	room -> y = y_as; // geef de kamer een y coördinaat.
@@ -101,7 +105,7 @@ void generateConnectedDungeon() {
         for (int x = 0; x < GRID_WIDTH; x++)
             grid[y][x] = NULL;
 
-    startRoom = createRoom(0, 0);
+    startRoom = maakRooms(0, 0);
     grid[0][0] = startRoom;
 
     Room* stack[GRID_WIDTH*GRID_HEIGHT];
@@ -138,9 +142,9 @@ void generateConnectedDungeon() {
         for (int i = 0; i < pnCount; i++) {
             int nx = potentialNeighbors[i][0];
             int ny = potentialNeighbors[i][1];
-            Room* newRoom = createRoom(nx, ny);
+            Room* newRoom = maakRooms(nx, ny);
             grid[ny][nx] = newRoom;
-            connectRooms(current, newRoom);
+            maakRooms(current, newRoom);
             stack[stackSize++] = newRoom;
         }
     }
@@ -158,6 +162,36 @@ void printRoomInfo(Room* room) {
     printf("\n");
 }
 
+void findLongestPathFromStart() {
+    Room* queue[MAX_QUEUE];
+    int front = 0, rear = 0;
+
+    for (int y = 0; y < GRID_HEIGHT; y++)
+        for (int x = 0; x < GRID_WIDTH; x++)
+            if (grid[y][x]) {
+                grid[y][x]->visited = 0;
+                grid[y][x]->distance = -1;
+            }
+
+    startRoom->visited = 1;
+    startRoom->distance = 0;
+    queue[rear++] = startRoom;
+    endRoom = startRoom;
+
+    while (front < rear) {
+        Room* current = queue[front++];
+        for (int i = 0; i < current->doorCount; i++) {
+            Room* neighbor = current->doors[i];
+            if (!neighbor->visited) {
+                neighbor->visited = 1;
+                neighbor->distance = current->distance + 1;
+                queue[rear++] = neighbor;
+                if (neighbor->distance > endRoom->distance && neighbor->distance >= MIN_DISTANCE_FOR_END)
+                    endRoom = neighbor;
+            }
+        }
+    }
+}
 
 
 

@@ -37,10 +37,16 @@ typedef struct Speeler{ // structuur voor de speler.
 	int stamina;
 } Player;
 
+int roomIdTeller = 0; // teller voor de kamer id's.
+
+
+
+// Functieprototypes
 Room *maakRooms(int x_as,int y_as); //de functie die de kamers maakt.
 void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers met elkaar verbind.
 void MaakDungeon(Room** rooms, int numRooms); //de functie die de dungeon maakt.
-int roomIdTeller = 0; // teller voor de kamer id's.
+void generateConnectedDungeon();
+
 
 int main(){ //de main.
 
@@ -71,13 +77,69 @@ void Connecteren_Van_Rooms(Room *r_nu, Room *r_volgende){ //de functie die de ka
 		if(r_nu -> doors[i] == r_volgende){
 			return;
 		}
-		if(r_nu -> doorCount < MaxDeuren && r_volgende -> doorCount<MaxDeuren){
-			r_nu->doors[r_nu->doorCount++] = r_volgende; 
-			r_volgende->doors[r_volgende->doorCount++] = r_nu; 
-			return;
-		}
+	}
+	if(r_nu -> doorCount < MaxDeuren && r_volgende -> doorCount<MaxDeuren){
+		r_nu->doors[r_nu->doorCount++] = r_volgende; 
+		r_volgende->doors[r_volgende->doorCount++] = r_nu; 
+		return;
 	}
 }
+
+void generateConnectedDungeon() {
+    for (int y = 0; y < GRID_HEIGHT; y++)
+        for (int x = 0; x < GRID_WIDTH; x++)
+            grid[y][x] = NULL;
+
+    startRoom = createRoom(0, 0);
+    grid[0][0] = startRoom;
+
+    Room* stack[GRID_WIDTH*GRID_HEIGHT];
+    int stackSize = 0;
+    stack[stackSize++] = startRoom;
+
+    while (stackSize > 0) {
+        Room* current = stack[--stackSize];
+
+        int potentialNeighbors[4][2];
+        int pnCount = 0;
+        for (int i = 0; i < 4; i++) {
+            int nx = current->x + neighbors[i][0];
+            int ny = current->y + neighbors[i][1];
+            if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
+                if (grid[ny][nx] == NULL) {
+                    potentialNeighbors[pnCount][0] = nx;
+                    potentialNeighbors[pnCount][1] = ny;
+                    pnCount++;
+                }
+            }
+        }
+
+        for (int i = pnCount - 1; i > 0; i--) {
+            int j = rand() % (i + 1);
+            int tx = potentialNeighbors[i][0];
+            int ty = potentialNeighbors[i][1];
+            potentialNeighbors[i][0] = potentialNeighbors[j][0];
+            potentialNeighbors[i][1] = potentialNeighbors[j][1];
+            potentialNeighbors[j][0] = tx;
+            potentialNeighbors[j][1] = ty;
+        }
+
+        for (int i = 0; i < pnCount; i++) {
+            int nx = potentialNeighbors[i][0];
+            int ny = potentialNeighbors[i][1];
+            Room* newRoom = createRoom(nx, ny);
+            grid[ny][nx] = newRoom;
+            connectRooms(current, newRoom);
+            stack[stackSize++] = newRoom;
+        }
+    }
+}
+
+
+
+
+
+
 
 void print_Dungeon(){
 	

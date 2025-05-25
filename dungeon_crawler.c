@@ -32,8 +32,6 @@ typedef struct Room{
 	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
 } Room;
 
-
-
 typedef struct Speeler{ // structuur voor de speler.
 	Room *currentRoom; // de kamer waar de speler zich in bevindt.
 	int hp;
@@ -63,6 +61,7 @@ void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers me
 void generateConnectedDungeon();
 void findLongestPathFromStart();
 void printRoomInfo(Room* room); //de functie die de informatie van de kamer print.
+void combat(Player* player, Monster* monster);
 void printDungeon(); //de functie die de Dungeon print.
 
 int main(){ //de main.
@@ -222,7 +221,23 @@ void findLongestPathFromStart() {
     }
 }
 
+void combat(Player* player, Monster* monster) {
+    while (player->hp > 0 && monster->hp > 0) {
+        int attackOrder = rand() % 2;
+        if (attackOrder == 0) {
+            monster->hp -= player->damage;
+            player->stamina -= 3;
+            printf("You attack the %s! (%d dmg) -> %d HP left.\n", monster->naam, player->damage, monster->hp);
+        } else {
+            player->hp -= monster->damage;
+            monster->stamina -= 3;
+            printf("The %s attacks you! (%d dmg) -> %d HP left.\n", monster->naam, monster->damage, player->hp);
+        }
 
+        if (player->stamina <= 0) player->stamina = 0;
+        if (monster->stamina <= 0) monster->stamina = 0;
+    }
+}
 
 
 void printDungeon() {

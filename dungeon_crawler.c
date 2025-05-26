@@ -3,6 +3,7 @@
 #include <time.h>
 #include <string.h> // Include this header for strcpy
 
+
 #define MaxDeuren 4 // max aantal deuren in een kamer.
 #define MAX_QUEUE   1000
 #define MIN_DISTANCE_FOR_END 8 // minimale afstand voor de eind kamer.
@@ -65,7 +66,8 @@ void combat(Player* player, Monster* monster);
 void printDungeon(); //de functie die de Dungeon print.
 
 int main(){ //de main.
-srand(time(NULL));
+
+    srand(time(NULL));
 
     char difficulty[15];
     choosedificulty(difficulty, &GRID_HEIGHT, &GRID_WIDTH);
@@ -93,30 +95,30 @@ srand(time(NULL));
 
     for (int y = 0; y < GRID_HEIGHT; y++) {
         for (int x = 0; x < GRID_WIDTH; x++) {
-            Room* r = grid[y][x];
-            if (r && r != startRoom && r != endRoom) {
+            Room* var_grid = grid[y][x];
+            if (var_grid && var_grid != startRoom && var_grid != endRoom) {
                 int spawnMonster = rand() % 4; // 25%
                 int spawnItem = rand() % 5;    // 20%
 
                 if (spawnMonster == 0) {
                     int m = rand() % 3;
-                    Monster* mon = malloc(sizeof(Monster));
-                    strcpy(mon->naam, monsterNames[m]);
-                    mon->hp = monsterHPs[m];
-                    mon->damage = monsterDamages[m];
-                    mon->stamina = monsterStamina[m];
-                    r->monster = mon;
+                    Monster* monster = malloc(sizeof(Monster));
+                    strcpy(monster -> naam, monsterNames[m]);
+                    monster -> hp = monsterHPs[m];
+                    monster -> damage = monsterDamages[m];
+                    monster -> stamina = monsterStamina[m];
+                    var_grid -> monster = monster;
                 }
                 if (spawnItem == 0) {
                     int i = rand() % 3;
-                    r->Item = items[i];
+                    var_grid -> Item = items[i];
                 }
             }
         }
     }
 
     printf("Welcome to the Dungeon Crawler!\n");
-    printf("S = Start room, X = End room, O = Other room\n");
+    printf("S = Start room\nX = End room\nO = Other room\n\n\n");
     printDungeon();// Uncomment to print the dungeon layout
 
     char input[10];
@@ -126,26 +128,26 @@ srand(time(NULL));
             printf("You reached the final room! You win!\n");
             break;
         }
-        if (player.currentRoom->monster) {
+        if (player.currentRoom -> monster) {
             printf("A monster blocks your path!\n");
-            combat(&player, player.currentRoom->monster);
+            combat(&player, player.currentRoom -> monster);
             if (player.hp <= 0) {
                 printf("Game Over.\n");
                 break;
             }
-            free(player.currentRoom->monster);
-            player.currentRoom->monster = NULL;
+            free(player.currentRoom -> monster);
+            player.currentRoom -> monster = NULL;
         }
-        if (player.currentRoom->Item) {
-            printf("You found a %s! Use it? (y/n): ", player.currentRoom->Item->naam);
+        if (player.currentRoom -> Item) {
+            printf("You found a %s! Use it? (y/n): ", player.currentRoom -> Item -> naam);
             //fgets(input, sizeof(input), stdin);
             scanf("%s", input);
             if (input[0] == 'y' || input[0] == 'Y') {
-                player.hp += player.currentRoom->Item->hpRestore;
-                player.stamina += player.currentRoom->Item->staminaRestore;
-                player.damage += player.currentRoom->Item->damageBoost;
-                printf("You used the %s.\n", player.currentRoom->Item->naam);
-                player.currentRoom->Item = NULL;
+                player.hp += player.currentRoom -> Item -> hpRestore;
+                player.stamina += player.currentRoom -> Item -> staminaRestore;
+                player.damage += player.currentRoom -> Item -> damageBoost;
+                printf("You used the %s.\n", player.currentRoom -> Item -> naam);
+                player.currentRoom -> Item = NULL;
             }
         }
         printf("Enter room id to move to (doors only), or -1, q or quit to exit: ");
@@ -158,8 +160,8 @@ srand(time(NULL));
         int nextId = atoi(input);
         Room* nextRoom = NULL;
         for (int i = 0; i < player.currentRoom->doorCount; i++) {
-            if (player.currentRoom->doors[i]->room_id == nextId) {
-                nextRoom = player.currentRoom->doors[i];
+            if (player.currentRoom -> doors[i] -> room_id == nextId) {
+                nextRoom = player.currentRoom -> doors[i];
                 break;
             }
         }
@@ -172,10 +174,10 @@ srand(time(NULL));
 
     for (int y = 0; y < GRID_HEIGHT; y++) {
         for (int x = 0; x < GRID_WIDTH; x++) {
-            Room* r = grid[y][x];
-            if (r) {
-                if (r->monster) free(r->monster);
-                free(r);
+            Room* var_grid = grid[y][x];
+            if (var_grid) {
+                if (var_grid -> monster) free(var_grid -> monster);
+                free(var_grid);
             }
         }
     }
@@ -194,7 +196,7 @@ void choosedificulty(char *difficulty, int *h, int *w) {
 		*w = 5;
     } else if (strcmp(difficulty, "2") == 0|| strcmp(difficulty, "Medium") == 0|| strcmp(difficulty, "medium") == 0) {
         printf("You chose Medium difficulty.\n");
-        *h =20;
+        *h = 10;
 		*w = 10;
     } else if (strcmp(difficulty, "3") == 0|| strcmp(difficulty, "hard") == 0|| strcmp(difficulty, "Hard") == 0) {
         printf("You chose Hard difficulty.\n");
@@ -202,8 +204,8 @@ void choosedificulty(char *difficulty, int *h, int *w) {
 		*w = 15;
     } else if (strcmp(difficulty, "4") == 0|| strcmp(difficulty, "Hardcore") == 0|| strcmp(difficulty, "hardcore") == 0) {
         printf("You chose Hardcore difficulty.\n");
-        *h = 20;
-		*w = 20;
+        *h = 30;
+		*w = 30;
     } else {
         printf("Invalid choice. Defaulting to Easy.\n");
         
@@ -237,8 +239,8 @@ void Connecteren_Van_Rooms(Room *r_nu, Room *r_volgende){ //de functie die de ka
 		}
 	}
 	if(r_nu -> doorCount < MaxDeuren && r_volgende -> doorCount<MaxDeuren){
-		r_nu->doors[r_nu->doorCount++] = r_volgende; 
-		r_volgende->doors[r_volgende->doorCount++] = r_nu; 
+		r_nu -> doors[r_nu -> doorCount++] = r_volgende; 
+		r_volgende -> doors[r_volgende -> doorCount++] = r_nu; 
 		return;
 	}
 }
@@ -261,8 +263,8 @@ void generateConnectedDungeon() {
         int potentialNeighbors[4][2];
         int pnCount = 0;
         for (int i = 0; i < 4; i++) {
-            int nx = current->x + neighbors[i][0];
-            int ny = current->y + neighbors[i][1];
+            int nx = current -> x + neighbors[i][0];
+            int ny = current -> y + neighbors[i][1];
             if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
                 if (grid[ny][nx] == NULL) {
                     potentialNeighbors[pnCount][0] = nx;
@@ -316,8 +318,8 @@ void findLongestPathFromStart() {
                 grid[y][x]->distance = -1;
             }
 
-    startRoom->visited = 1;
-    startRoom->distance = 0;
+    startRoom -> visited = 1;
+    startRoom -> distance = 0;
     queue[rear++] = startRoom;
     endRoom = startRoom;
 
@@ -325,11 +327,11 @@ void findLongestPathFromStart() {
         Room* current = queue[front++];
         for (int i = 0; i < current->doorCount; i++) {
             Room* neighbor = current->doors[i];
-            if (!neighbor->visited) {
-                neighbor->visited = 1;
-                neighbor->distance = current->distance + 1;
+            if (!neighbor -> visited) {
+                neighbor -> visited = 1;
+                neighbor -> distance = current->distance + 1;
                 queue[rear++] = neighbor;
-                if (neighbor->distance > endRoom->distance && neighbor->distance >= MIN_DISTANCE_FOR_END)
+                if (neighbor -> distance > endRoom -> distance && neighbor -> distance >= MIN_DISTANCE_FOR_END)
                     endRoom = neighbor;
             }
         }
@@ -337,23 +339,22 @@ void findLongestPathFromStart() {
 }
 
 void combat(Player* player, Monster* monster) {
-    while (player->hp > 0 && monster->hp > 0) {
+    while (player -> hp > 0 && monster -> hp > 0) {
         int attackOrder = rand() % 2;
         if (attackOrder == 0) {
-            monster->hp -= player->damage;
-            player->stamina -= 3;
-            printf("You attack the %s! (%d dmg) -> %d HP left.\n", monster->naam, player->damage, monster->hp);
+            monster -> hp -= player -> damage;
+            player -> stamina -= 3;
+            printf("You attack the %s! (%d dmg) => %d HP left.\n", monster -> naam, player -> damage, monster -> hp);
         } else {
-            player->hp -= monster->damage;
-            monster->stamina -= 3;
-            printf("The %s attacks you! (%d dmg) -> %d HP left.\n", monster->naam, monster->damage, player->hp);
+            player -> hp -= monster -> damage;
+            monster -> stamina -= 3;
+            printf("The %s attacks you! (%d dmg) => %d HP left.\n", monster -> naam, monster -> damage, player -> hp);
         }
 
-        if (player->stamina <= 0) player->stamina = 0;
-        if (monster->stamina <= 0) monster->stamina = 0;
+        if (player -> stamina <= 0) player -> stamina = 0;
+        if (monster -> stamina <= 0) monster -> stamina = 0;
     }
 }
-
 
 void printDungeon() {
     for (int y = 0; y < GRID_HEIGHT; y++) {
@@ -371,7 +372,7 @@ void printDungeon() {
                 if (x < GRID_WIDTH - 1 && grid[y][x + 1]) {
                     int connected = 0;
                     for (int i = 0; i < grid[y][x]->doorCount; i++) {
-                        if (grid[y][x]->doors[i] == grid[y][x + 1]) connected = 1;
+                        if (grid[y][x] -> doors[i] == grid[y][x + 1]) connected = 1;
                     }
                     printf(connected ? " - " : "   ");
                 } else {
@@ -389,8 +390,8 @@ void printDungeon() {
             if (grid[y][x]) {
                 if (y < GRID_HEIGHT - 1 && grid[y + 1][x]) {
                     int connected = 0;
-                    for (int i = 0; i < grid[y][x]->doorCount; i++) {
-                        if (grid[y][x]->doors[i] == grid[y + 1][x]) connected = 1;
+                    for (int i = 0; i < grid[y][x] -> doorCount; i++) {
+                        if (grid[y][x] -> doors[i] == grid[y + 1][x]) connected = 1;
                     }
                     printf(connected ? "|   " : "    ");
                 } else {

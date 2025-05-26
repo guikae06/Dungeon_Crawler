@@ -135,7 +135,7 @@ int main(){ //de main.
 
     char input[10];
     while (1) {
-        printRoomInfo(player.currentRoom);
+        
         if (player.currentRoom -> CheckPoint) {
             printf("You found a checkpoint! Do you want to save your game? (y/n): ");
             scanf("%s", input);
@@ -172,6 +172,8 @@ int main(){ //de main.
                 player.currentRoom -> Item = NULL;
             }
         }
+        
+        printRoomInfo(player.currentRoom);
 
         printf("Enter room id to move to (doors only), or -1, q or quit to exit: ");
         scanf("%s", input);
@@ -439,14 +441,68 @@ void printDungeon() {
 }
 
 void saveGame(Player* player) {
-    FILE* file = fopen("savegame.txt", "w");
+    FILE *file = fopen("savegame.dat", "wb");
     if (!file) {
-        printf("Error saving game.\n");
+        printf("Could not open save file for writing.\n");
         return;
     }
-    fprintf(file, "%d %d %d %d\n", player->hp, player->damage, player->stamina, player->currentRoom->room_id);
+
+    // Eerst grootte van grid opslaan
+    fwrite(&GRID_HEIGHT, sizeof(int), 1, file);
+    fwrite(&GRID_WIDTH, sizeof(int), 1, file);
+
+    // Aantal kamers opslaan
+    int roomCount = 0;
+    for (int y = 0; y < GRID_HEIGHT; y++)
+        for (int x = 0; x < GRID_WIDTH; x++)
+            if (grid[y][x]) roomCount++;
+    fwrite(&roomCount, sizeof(int), 1, file);
+
+    // Kamers opslaan
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            Room* room = grid[y][x];
+            if (room) {
+                fwrite(&room->room_id, sizeof(int), 1, file);
+                fwrite(&room->x, sizeof(int), 1, file);
+                fwrite(&room->y, sizeof(int), 1, file);
+                fwrite(&room->CheckPoint, sizeof(int), 1, file);
+
+                // Monster opslaan
+                int hasMonster = (room->monster != NULL);
+                fwrite(&hasMonster, sizeof(int), 1, file);
+                if (hasMonster) {
+                    fwrite(room->monster, sizeof(Monster), 1, file);
+                }
+
+                // Item opslaan
+                int hasItem = (room->Item != NULL);
+                fwrite(&hasItem, sizeof(int), 1, file);
+                if (hasItem) {
+                    fwrite(room->Item, sizeof(Item), 1, file);
+                }
+
+                // Deurconnecties opslaan (aantal deuren + lijst met room_id's)
+                fwrite(&room->doorCount, sizeof(int), 1, file);
+                for (int i = 0; i < room->doorCount; i++) {
+                    int doorRoomId = room->doors[i]->room_id;
+                    fwrite(&doorRoomId, sizeof(int), 1, file);
+                }
+            }
+        }
+    }
+
+    // Spelerpositie opslaan (room_id)
+    int playerRoomId = player->currentRoom->room_id;
+    fwrite(&playerRoomId, sizeof(int), 1, file);
+
+    // Speler stats opslaan
+    fwrite(&player->hp, sizeof(int), 1, file);
+    fwrite(&player->damage, sizeof(int), 1, file);
+    fwrite(&player->stamina, sizeof(int), 1, file);
+
     fclose(file);
-    printf("Game saved!\n");
+    printf("Game saved successfully.\n");
 }
 
 void loadGame(Player* player) {

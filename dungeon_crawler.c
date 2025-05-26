@@ -416,6 +416,27 @@ void saveGame(Player* player) {
     printf("Game saved!\n");
 }
 
+void loadGame(Player* player) {
+    FILE* file = fopen("savegame.txt", "r");
+    if (!file) {
+        printf("No save file found.\n");
+        return;
+    }
+    int room_id;
+    fscanf(file, "%d %d %d %d", &player->hp, &player->damage, &player->stamina, &room_id);
+    fclose(file);
+
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x] && grid[y][x]->room_id == room_id) {
+                player->currentRoom = grid[y][x];
+                printf("Game loaded! You're back in room %d.\n", room_id);
+                return;
+            }
+        }
+    }
+    printf("Room ID not found. Load failed.\n");
+}
 
 
 

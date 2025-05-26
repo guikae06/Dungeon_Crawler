@@ -31,6 +31,7 @@ typedef struct Room{
     Monster *monster;
 	Item *Item;
 	struct Room *doors[MaxDeuren]; //deuren naar andere kamers.
+    int CheckPoint;
 } Room;
 
 typedef struct Speeler{ // structuur voor de speler.
@@ -61,8 +62,8 @@ Room *maakRooms(int x_as,int y_as); //de functie die de kamers maakt.
 void Roomconnection(Room *r_nu, Room *r_volgende); //de functie die de kamers met elkaar verbind.
 void generateConnectedDungeon();
 void findLongestPathFromStart();
-void printRoomInfo(Room* room); //de functie die de informatie van de kamer print.
 void combat(Player* player, Monster* monster);
+void printRoomInfo(Room* room); //de functie die de informatie van de kamer print.
 void printDungeon(); //de functie die de Dungeon print.
 void saveGame(Player* player);
 void loadGame(Player* player);
@@ -115,21 +116,39 @@ int main(){ //de main.
                     int i = rand() % 3;
                     var_grid -> Item = items[i];
                 }
+                if (rand() % 10 == 0) { // 10% kans
+                    var_grid->CheckPoint = 1;
+                }
             }
         }
     }
 
     printf("Welcome to the Dungeon Crawler!\n");
     printf("S = Start room\nX = End room\nO = Other room\n\n\n");
+    char InputSave[5];
+    printf("Do you want to load the previous game? (y/n): ");
+    scanf("%s", InputSave);
+    if (InputSave[0] == 'y' || InputSave[0] == 'Y') {
+        loadGame(&player);
+    }
     printDungeon();// Uncomment to print the dungeon layout
 
     char input[10];
     while (1) {
         printRoomInfo(player.currentRoom);
+        if (player.currentRoom -> CheckPoint) {
+            printf("You found a checkpoint! Do you want to save your game? (y/n): ");
+            scanf("%s", input);
+            if (input[0] == 'y' || input[0] == 'Y') {
+                saveGame(&player);
+            }
+        }
+        
         if (player.currentRoom == endRoom) {
             printf("You reached the final room! You win!\n");
             break;
         }
+
         if (player.currentRoom -> monster) {
             printf("A monster blocks your path!\n");
             combat(&player, player.currentRoom -> monster);
@@ -140,6 +159,7 @@ int main(){ //de main.
             free(player.currentRoom -> monster);
             player.currentRoom -> monster = NULL;
         }
+
         if (player.currentRoom -> Item) {
             printf("You found a %s! Use it? (y/n): ", player.currentRoom -> Item -> naam);
             //fgets(input, sizeof(input), stdin);
@@ -152,6 +172,7 @@ int main(){ //de main.
                 player.currentRoom -> Item = NULL;
             }
         }
+
         printf("Enter room id to move to (doors only), or -1, q or quit to exit: ");
         scanf("%s", input);
         //fgets(input, sizeof(input), stdin);
@@ -159,6 +180,7 @@ int main(){ //de main.
             printf("Goodbye!\n");
             break;
         }
+
         int nextId = atoi(input);
         Room* nextRoom = NULL;
         for (int i = 0; i < player.currentRoom->doorCount; i++) {
@@ -167,9 +189,11 @@ int main(){ //de main.
                 break;
             }
         }
+
         if (nextRoom) {
             player.currentRoom = nextRoom;
-        } else {
+        }
+        else {
             printf("Invalid room.\n");
         }
     }
@@ -223,6 +247,7 @@ Room *maakRooms(int x_as,int y_as){
 	room -> visited = 0; // de kamer is nog niet bezocht.
 	room -> distance = -1; // de afstand is nog niet bekend.
 	room -> doorCount = 0; // er zijn nog geen deuren in de kamer.
+    room -> CheckPoint = 0; // de kamer is geen checkpoint.
 
 	for (int i = 0; i < 4; i++){
 		room -> doors[i] = NULL; // maak de deuren leeg.
@@ -299,10 +324,16 @@ void generateConnectedDungeon() {
 
 void printRoomInfo(Room* room) {
     printf("You are in room %d at (%d,%d).\n", room->room_id, room->x, room->y);
-    if (room->monster)
+    if (room->monster){
         printf("There is a %s in the room!\n", room->monster->naam);
-    if (room->Item)
+    }
+    if (room->Item){
         printf("You see a %s.\n", room->Item->naam);
+    }
+    if (room->CheckPoint) {
+        printf("This room is a checkpoint!\n");
+    }
+    
     printf("Doors lead to rooms: ");
     for (int i = 0; i < room->doorCount; i++)
         printf("%d ", room->doors[i]->room_id);

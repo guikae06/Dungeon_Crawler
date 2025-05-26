@@ -41,6 +41,9 @@ typedef struct Speeler{ // structuur voor de speler.
 	int stamina;
 } Player;
 
+
+
+
 int GRID_HEIGHT = 5;
 int GRID_WIDTH = 5;
 
@@ -243,6 +246,7 @@ void choosedificulty(char *difficulty, int *h, int *w) {
 Room *maakRooms(int x_as,int y_as){
 
 	Room *room = malloc(sizeof(Room)); // maak een nieuwe kamer aan.
+    memset(room, 0, sizeof(Room));  // alles op 0/NULL
 	room -> room_id = roomIdTeller++; // geef de kamer een id.
 	room -> x = x_as; // geef de kamer een x coördinaat.
 	room -> y = y_as; // geef de kamer een y coördinaat.
@@ -441,149 +445,284 @@ void printDungeon() {
 }
 
 void saveGame(Player* player) {
-    FILE* file = fopen("savegame.txt", "w");
-    if (!file) {
-        printf("Failed to save game.\n");
+    FILE* f = fopen("savegame.txt", "w");
+    if (!f) {
+        perror("Failed to open save file");
         return;
     }
 
-    // Sla spelerstatus op
-    fprintf(file, "currentRoomid: %d,playerhp: %d, playerdamage: %d,playerstamina: %d\n", player->currentRoom->room_id, player->hp, player->damage, player->stamina);
+    // Save grid dimensions and roomIdTeller
+    fprintf(f, "%d %d %d\n", GRID_WIDTH, GRID_HEIGHT, roomIdTeller);
 
-    // Sla aantal kamers op
-    fprintf(file, "roomIdTeller: %d\n", roomIdTeller);
-
-    // Sla kamers op
+    // Save each room's data
     for (int y = 0; y < GRID_HEIGHT; y++) {
         for (int x = 0; x < GRID_WIDTH; x++) {
-            Room* room = grid[y][x];
-            if (room) {
-                // Kamer data
-                fprintf(file, "roomID: %d, roomX: %d, roomY: %d, doorCount: %d, CP: %d\n", room->room_id, room->x, room->y, room->doorCount, room->CheckPoint);
+            Room* r = grid[y][x];
+            if (r) {
+                fprintf(f, "Room %d\n", r->room_id);
+                fprintf(f, "%d %d %d %d %d %d %d\n", r->x, r->y, r->visited, r->distance, r->doorCount, r->CheckPoint, 1); // 1 means room exists
 
-                // Deuren (room_id's)
-                for (int i = 0; i < room->doorCount; i++) {
-                    fprintf(file, "room->doors[%d]->room_id: %d ", i, room->doors[i]->room_id);
+                // Save door room_ids
+                fprintf(f, "Doors");
+                for (int i = 0; i < r->doorCount; i++) {
+                    int doorRoomId = r->doors[i] ? r->doors[i]->room_id : -1;
+                    fprintf(f, " %d", doorRoomId);
                 }
-                fprintf(file, "\n");
+                fprintf(f, "\n");
 
-                // Monster info
-                if (room->monster) {
-                    fprintf(file, "1 monsternaam: %s, monsterhp: %d, monsterdamage: %d, monsterstamina: %d\n", room->monster->naam, room->monster->hp, room->monster->damage, room->monster->stamina);
+                // Save monster
+                if (r->monster) {
+                    fprintf(f, "Monster 1\n");
+                    fprintf(f, "%s %d %d %d\n", r->monster->naam, r->monster->hp, r->monster->damage, r->monster->stamina);
                 } else {
-                    fprintf(file, "geen monster\n");
+                    fprintf(f, "Monster 0\n");
                 }
 
-                // Item info
-                if (room->Item) {
-                    fprintf(file, "1 item:%s, itemhpRestore %d, staminarestore: %d,damageBooste: %d\n", room->Item->naam, room->Item->hpRestore, room->Item->staminaRestore, room->Item->damageBoost);
+                // Save item
+                if (r->Item) {
+                    fprintf(f, "Item 1\n");
+                    fprintf(f, "%s %d %d %d\n", r->Item->naam, r->Item->hpRestore, r->Item->staminaRestore, r->Item->damageBoost);
                 } else {
-                    fprintf(file, "geen item\n");
+                    fprintf(f, "Item 0\n");
                 }
+            } else {
+                // Indicate no room at this position
+                fprintf(f, "Room -1\n");
             }
         }
     }
 
-    fclose(file);
+    // Save player data
+    fprintf(f, "Player\n");
+    fprintf(f, "%d %d %d\n", player->hp, player->damage, player->stamina);
+    int playerRoomId = player->currentRoom ? player->currentRoom->room_id : -1;
+    fprintf(f, "%d\n", playerRoomId);
+
+    fclose(f);
     printf("Game saved.\n");
 }
 
 void loadGame(Player* player) {
-    FILE* file = fopen("savegame.txt", "r");
-    if (!file) {
-        printf("No saved game found.\n");
-        return;
-    }
-
-    // Eerste: reset huidige dungeon, vrijgeven geheugen
+    // Free existing rooms and monsters before loading new game
     for (int y = 0; y < GRID_HEIGHT; y++) {
         for (int x = 0; x < GRID_WIDTH; x++) {
-            Room* room = grid[y][x];
-            if (room) {
-                if (room->monster) free(room->monster);
-                room->monster = NULL;
-                room->Item = NULL; // Items zijn pointers naar statische structen? Anders ook free
-                free(room);
+            Room* r = grid[y][x];
+            if (r) {
+                if (r->monster) {
+                    free(r->monster);
+                    r->monster = NULL;
+                }
+                if (r->Item) {
+                    free(r->Item);
+                    r->Item = NULL;
+                }
+                free(r);
                 grid[y][x] = NULL;
             }
         }
     }
-    roomIdTeller = 0;
-    startRoom = NULL;
-    endRoom = NULL;
 
-    // Lees speler status (kamer-id, hp, damage, stamina)
-    int playerRoomId, hp, damage, stamina;
-    fscanf(file, "%d %d %d %d", &playerRoomId, &hp, &damage, &stamina);
-
-    // Lees aantal kamers
-    int aantalKamers;
-    fscanf(file, "%d", &aantalKamers);
-
-    // Maak array aan om kamers te bewaren op basis van room_id
-    Room** roomsById = malloc(sizeof(Room*) * aantalKamers);
-    for (int i = 0; i < aantalKamers; i++) {
-        roomsById[i] = NULL;
+    FILE* f = fopen("savegame.txt", "r");
+    if (!f) {
+        perror("Failed to open save file");
+        return;
     }
 
-    // Lees kamers en maak aan
-    for (int i = 0; i < aantalKamers; i++) {
-        int id, x, y, doorCount, checkpoint;
-        fscanf(file, "%d %d %d %d %d", &id, &x, &y, &doorCount, &checkpoint);
-        
-        Room* room = maakRooms(x, y);
-        room->room_id = id;
-        room->doorCount = doorCount;
-        room->CheckPoint = checkpoint;
-
-        // Plaats kamer in grid
-        grid[y][x] = room;
-        roomsById[id] = room;
-
-        if (id == 0) startRoom = room; // assuming startRoom is id 0
+    // Read grid dimensions and roomIdTeller
+    if (fscanf(f, "%d %d %d\n", &GRID_WIDTH, &GRID_HEIGHT, &roomIdTeller) != 3) {
+        printf("Error reading grid dimensions and roomIdTeller\n");
+        fclose(f);
+        return;
     }
+    printf("Loaded grid size: %d x %d, roomIdTeller: %d\n", GRID_WIDTH, GRID_HEIGHT, roomIdTeller);
 
-    // Lees deuren (verbindingen)
-    for (int i = 0; i < aantalKamers; i++) {
-        Room* room = roomsById[i];
-        for (int d = 0; d < room->doorCount; d++) {
-            int doorId;
-            fscanf(file, "%d", &doorId);
-            room->doors[d] = roomsById[doorId];
+    Room* tempRooms[10000] = {NULL};
+    int doorRoomIdsGrid[100][100][MaxDeuren];
+    // Initialize doorRoomIdsGrid to -1
+    for (int y = 0; y < 100; y++) {
+        for (int x = 0; x < 100; x++) {
+            for (int i = 0; i < MaxDeuren; i++) {
+                doorRoomIdsGrid[y][x][i] = -1;
+            }
         }
     }
 
-    // Lees monsters en items
-    for (int i = 0; i < aantalKamers; i++) {
-        Room* room = roomsById[i];
-        int hasMonster;
-        fscanf(file, "%d", &hasMonster);
-        if (hasMonster == 1) {
-            Monster* m = malloc(sizeof(Monster));
-            fscanf(file, "%s %d %d %d", m->naam, &m->hp, &m->damage, &m->stamina);
-            room->monster = m;
-        } else {
-            room->monster = NULL;
-        }
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            int room_id;
+            if (fscanf(f, "Room %d\n", &room_id) != 1) {
+                printf("Error reading room id at (%d,%d)\n", x, y);
+                fclose(f);
+                return;
+            }
+            if (room_id == -1) {
+                grid[y][x] = NULL;
+                for (int i = 0; i < MaxDeuren; i++) {
+                    doorRoomIdsGrid[y][x][i] = -1;
+                }
+                printf("No room at (%d,%d)\n", x, y);
+            } else {
+                Room* r = malloc(sizeof(Room));
+                memset(r, 0, sizeof(Room));
+                r->room_id = room_id;
 
-        int hasItem;
-        fscanf(file, "%d", &hasItem);
-        if (hasItem == 1) {
-            Item* it = malloc(sizeof(Item));
-            fscanf(file, "%s %d %d %d", it->naam, &it->hpRestore, &it->staminaRestore, &it->damageBoost);
-            room->Item = it;
-        } else {
-            room->Item = NULL;
+                int x_pos, y_pos, visited, distance, doorCount, CheckPoint, exists;
+                if (fscanf(f, "%d %d %d %d %d %d %d\n", &x_pos, &y_pos, &visited, &distance, &doorCount, &CheckPoint, &exists) != 7) {
+                    printf("Error reading room data for room %d\n", room_id);
+                    free(r);
+                    fclose(f);
+                    return;
+                }
+                r->x = x_pos;
+                r->y = y_pos;
+                r->visited = visited;
+                r->distance = distance;
+                r->doorCount = doorCount;
+                r->CheckPoint = CheckPoint;
+
+                // Read doors
+                char doorsLabel[10];
+                if (fscanf(f, "%s", doorsLabel) != 1 || strcmp(doorsLabel, "Doors") != 0) {
+                    printf("Error reading Doors label for room %d\n", room_id);
+                    free(r);
+                    fclose(f);
+                    return;
+                }
+                for (int i = 0; i < doorCount; i++) {
+                    if (fscanf(f, "%d", &doorRoomIdsGrid[y][x][i]) != 1) {
+                        printf("Error reading door room id for door %d in room %d\n", i, room_id);
+                        free(r);
+                        fclose(f);
+                        return;
+                    }
+                }
+                fscanf(f, "\n");
+
+                // Initialize doors to NULL for now
+                for (int i = 0; i < MaxDeuren; i++) {
+                    r->doors[i] = NULL;
+                }
+
+                // Do not assign doors here, will assign after all rooms loaded
+
+                // Read monster
+                char monsterLabel[10];
+                int hasMonster;
+                if (fscanf(f, "%s %d\n", monsterLabel, &hasMonster) != 2) {
+                    printf("Error reading monster label and flag for room %d\n", room_id);
+                    free(r);
+                    fclose(f);
+                    return;
+                }
+                if (hasMonster) {
+                    Monster* m = malloc(sizeof(Monster));
+                    if (fscanf(f, "%s %d %d %d\n", m->naam, &m->hp, &m->damage, &m->stamina) != 4) {
+                        printf("Error reading monster data for room %d\n", room_id);
+                        free(m);
+                        free(r);
+                        fclose(f);
+                        return;
+                    }
+                    r->monster = m;
+                } else {
+                    r->monster = NULL;
+                }
+
+                // Read item
+                char itemLabel[10];
+                int hasItem;
+                if (fscanf(f, "%s %d\n", itemLabel, &hasItem) != 2) {
+                    printf("Error reading item label and flag for room %d\n", room_id);
+                    if (r->monster) free(r->monster);
+                    free(r);
+                    fclose(f);
+                    return;
+                }
+                if (hasItem) {
+                    Item* it = malloc(sizeof(Item));
+                    if (fscanf(f, "%s %d %d %d\n", it->naam, &it->hpRestore, &it->staminaRestore, &it->damageBoost) != 4) {
+                        printf("Error reading item data for room %d\n", room_id);
+                        free(it);
+                        if (r->monster) free(r->monster);
+                        free(r);
+                        fclose(f);
+                        return;
+                    }
+                    r->Item = it;
+                } else {
+                    r->Item = NULL;
+                }
+
+                grid[y][x] = r;
+                tempRooms[r->room_id] = r;
+                printf("Loaded room %d at (%d,%d) with %d doors\n", room_id, x_pos, y_pos, doorCount);
+            }
         }
     }
 
-    player->currentRoom = roomsById[playerRoomId];
-    player->hp = hp;
-    player->damage = damage;
-    player->stamina = stamina;
+    // Reconnect doors using tempRooms and doorRoomIdsGrid
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x]) {
+                for (int i = 0; i < grid[y][x]->doorCount; i++) {
+                    int doorRoomId = doorRoomIdsGrid[y][x][i];
+                    if (doorRoomId >= 0 && doorRoomId < 10000 && tempRooms[doorRoomId] != NULL) {
+                        grid[y][x]->doors[i] = tempRooms[doorRoomId];
+                    } else {
+                        grid[y][x]->doors[i] = NULL;
+                    }
+                }
+            }
+        }
+    }
 
-    free(roomsById);
+    // Read player data
+    char playerLabel[10];
+    if (fscanf(f, "%s\n", playerLabel) != 1 || strcmp(playerLabel, "Player") != 0) {
+        printf("Error reading Player label\n");
+        fclose(f);
+        return;
+    }
+    if (fscanf(f, "%d %d %d\n", &player->hp, &player->damage, &player->stamina) != 3) {
+        printf("Error reading player stats\n");
+        fclose(f);
+        return;
+    }
+    int playerRoomId;
+    if (fscanf(f, "%d\n", &playerRoomId) != 1) {
+        printf("Error reading player room id\n");
+        fclose(f);
+        return;
+    }
+    player->currentRoom = NULL;
+    for (int y = 0; y < GRID_HEIGHT && player->currentRoom == NULL; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x] && grid[y][x]->room_id == playerRoomId) {
+                player->currentRoom = grid[y][x];
+                break;
+            }
+        }
+    }
 
+    if (player->currentRoom == NULL) {
+        printf("Warning: Player's current room not found in loaded grid. Setting to startRoom.\n");
+        player->currentRoom = grid[0][0];
+    }
+
+    startRoom = grid[0][0];
+
+    // Find end room again by longest distance
+    Room* farthest = startRoom;
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x] && grid[y][x]->distance > farthest->distance) {
+                farthest = grid[y][x];
+            }
+        }
+    }
+    endRoom = farthest;
+
+    fclose(f);
     printf("Game loaded.\n");
 }
 

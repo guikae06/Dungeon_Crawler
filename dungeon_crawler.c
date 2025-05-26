@@ -405,7 +405,16 @@ void printDungeon() {
     }
 }
 
-
+void saveGame(Player* player) {
+    FILE* file = fopen("savegame.txt", "w");
+    if (!file) {
+        printf("Error saving game.\n");
+        return;
+    }
+    fprintf(file, "%d %d %d %d\n", player->hp, player->damage, player->stamina, player->currentRoom->room_id);
+    fclose(file);
+    printf("Game saved!\n");
+}
 
 
 

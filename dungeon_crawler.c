@@ -64,6 +64,8 @@ void findLongestPathFromStart();
 void printRoomInfo(Room* room); //de functie die de informatie van de kamer print.
 void combat(Player* player, Monster* monster);
 void printDungeon(); //de functie die de Dungeon print.
+void saveGame(Player* player);
+void loadGame(Player* player);
 
 int main(){ //de main.
 

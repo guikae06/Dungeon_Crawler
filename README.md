@@ -23,33 +23,33 @@ Dit project is een tekstgebaseerde **Dungeon Crawler game** geschreven in **C**,
 ## 📂 Opslagstructuur
 Game wordt opgeslagen in `savegame.txt` (of JSON indien ingeschakeld).
 
-Bestandsvoorbeeld:
-HP=80
-Level=2
-RoomID=5
-Inventory=Potion,Key
+- Bestandsvoorbeeld:
+    - HP=80
+    - Level=2
+    - RoomID=5
+    -  Inventory=Potion,Key
 
 ## Voorbeeld van het spel
 
-You are in room 4 at (1,1).
-Doors lead to rooms: 2 5 6
-Enter room id to move to (doors only), or -1, q or quit to exit: 6
-You are in room 6 at (2,1).
-Doors lead to rooms: 4 7 8
-Enter room id to move to (doors only), or -1, q or quit to exit: 8
-You are in room 8 at (2,2).
-Doors lead to rooms: 6 9 10
-Enter room id to move to (doors only), or -1, q or quit to exit: 9
-A monster blocks your path!
-The Goblin attacks you! (5 dmg) => 75 HP left.
-The Goblin attacks you! (5 dmg) => 70 HP left.
-The Goblin attacks you! (5 dmg) => 65 HP left.
-The Goblin attacks you! (5 dmg) => 60 HP left.
-The Goblin attacks you! (5 dmg) => 55 HP left.
-The Goblin attacks you! (5 dmg) => 50 HP left.
-You attack the Goblin! (10 dmg) => 10 HP left.
-The Goblin attacks you! (5 dmg) => 45 HP left.
-You attack the Goblin! (10 dmg) => 0 HP left.
+- You are in room 4 at (1,1).
+- Doors lead to rooms: 2 5 6
+- Enter room id to move to (doors only), or -1, q or quit to exit: 6
+- You are in room 6 at (2,1).
+- Doors lead to rooms: 4 7 8
+- Enter room id to move to (doors only), or -1, q or quit to exit: 8
+- You are in room 8 at (2,2).
+- Doors lead to rooms: 6 9 10
+- Enter room id to move to (doors only), or -1, q or quit to exit: 9
+- A monster blocks your path!
+- The Goblin attacks you! (5 dmg) => 75 HP left.
+- The Goblin attacks you! (5 dmg) => 70 HP left.
+- The Goblin attacks you! (5 dmg) => 65 HP left.
+- The Goblin attacks you! (5 dmg) => 60 HP left.
+- The Goblin attacks you! (5 dmg) => 55 HP left.
+- The Goblin attacks you! (5 dmg) => 50 HP left.
+- You attack the Goblin! (10 dmg) => 10 HP left.
+- The Goblin attacks you! (5 dmg) => 45 HP left.
+- You attack the Goblin! (10 dmg) => 0 HP left.
 
 ## ✅ Build-instructies
 ### ⚙️ Vereisten

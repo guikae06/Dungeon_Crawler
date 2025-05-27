@@ -218,7 +218,7 @@ int main(){ //de main.
 
 void choosedificulty(char *difficulty, int *h, int *w) {
     printf("Choose difficulty:\n");
-    printf("1. Easy\n2. Medium\n3. Hard\n4. Hardcore\n ");
+    printf("1. Easy\n2. Medium\n3. Hard\n4. Hardcore\n> ");
     scanf("%s", difficulty);
     getchar(); // consume newline
     if (strcmp(difficulty, "1") == 0|| strcmp(difficulty, "Easy") == 0|| strcmp(difficulty, "easy") == 0) {
@@ -331,18 +331,19 @@ void generateConnectedDungeon() {
 void printRoomInfo(Room* room) {
     printf("You are in room %d at (%d,%d).\n", room->room_id, room->x, room->y);
     if (room->monster){
-        printf("There is a %s in the room!\n", room->monster->naam);
+        printf("\033[0;30m  There is a %s in the room!\033[0;37m\n\n", room->monster->naam);
     }
     if (room->Item){
-        printf("You see a %s.\n", room->Item->naam);
+        printf("You see a %s.\n\n", room->Item->naam);
+
     }
     if (room->CheckPoint) {
-        printf("This room is a checkpoint!\n");
+        printf("\033[0;36mThis room is a checkpoint!\033[0;37m\n\n");
     }
     
-    printf("Doors lead to rooms: ");
+    printf("Doors lead to rooms:");
     for (int i = 0; i < room->doorCount; i++)
-        printf("%d ", room->doors[i]->room_id);
+        printf("\n-> room: %d", room->doors[i]->room_id);
     printf("\n");
 }
 
@@ -383,11 +384,11 @@ void combat(Player* player, Monster* monster) {
         if (attackOrder == 0) {
             monster -> hp -= player -> damage;
             player -> stamina -= 3;
-            printf("You attack the %s! (%d dmg) => %d HP left.\n", monster -> naam, player -> damage, monster -> hp);
+            printf("\033[0;33mYou attack the %s! (%d dmg) => %d HP left.\033[0;37m\n", monster -> naam, player -> damage, monster -> hp);
         } else {
             player -> hp -= monster -> damage;
             monster -> stamina -= 3;
-            printf("The %s attacks you! (%d dmg) => %d HP left.\n", monster -> naam, monster -> damage, player -> hp);
+            printf("\033[0;31m The %s attacks you! (%d dmg) => %d HP left.\033[0;37m\n", monster -> naam, monster -> damage, player -> hp);
         }
 
         if (player -> stamina <= 0) player -> stamina = 0;

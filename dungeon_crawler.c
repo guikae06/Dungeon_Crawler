@@ -502,170 +502,24 @@ void saveGame(Player* player) {
     printf("Game saved.\n");
 }
 
-void load_game(const char *filename, Player *player, Room ***rooms_ptr, int *room_count_ptr) {
-    FILE *file = fopen(filename, "r");
+void loadGame(Player* player) {
+    FILE* file = fopen("savegame.txt", "r");
     if (!file) {
-        perror("Kan bestand niet openen om te laden");
+        printf("No save file found.\n");
         return;
     }
-
-    // Read player location (room_id), hp, damage, stamina
-    int player_location_id;
-    if (fscanf(file, "%d %d %d %d", &player_location_id, &player->hp, &player->damage, &player->stamina) != 4) {
-        printf("Error reading player data\n");
-        fclose(file);
-        return;
-    }
-
-    // Read room count
-    if (fscanf(file, "%d", room_count_ptr) != 1) {
-        printf("Error reading room count\n");
-        fclose(file);
-        return;
-    }
-    int count = *room_count_ptr;
-
-    // Allocate rooms array
-    Room **rooms = malloc(sizeof(Room*) * count);
-    if (!rooms) {
-        perror("Memory allocation failed for rooms");
-        fclose(file);
-        return;
-    }
-
-    // Temporary array to hold door room_ids for each room
-    int (*door_room_ids)[4] = malloc(sizeof(int[4]) * count);
-    if (!door_room_ids) {
-        perror("Memory allocation failed for door_room_ids");
-        free(rooms);
-        fclose(file);
-        return;
-    }
-
-    // Initialize rooms to NULL
-    for (int i = 0; i < count; i++) {
-        rooms[i] = NULL;
-        for (int j = 0; j < 4; j++) {
-            door_room_ids[i][j] = -1;
-        }
-    }
-
-    // Read rooms data
-    for (int i = 0; i < count; i++) {
-        Room *r = malloc(sizeof(Room));
-        if (!r) {
-            perror("Memory allocation failed for room");
-            // Free previously allocated rooms and door_room_ids
-            for (int k = 0; k < i; k++) {
-                if (rooms[k]) {
-                    if (rooms[k]->monster) free(rooms[k]->monster);
-                    if (rooms[k]->Item) free(rooms[k]->Item);
-                    free(rooms[k]);
-                }
-            }
-            free(rooms);
-            free(door_room_ids);
-            fclose(file);
-            return;
-        }
-        memset(r, 0, sizeof(Room));
-        r->monster = NULL;
-        r->Item = NULL;
-
-        // Read room_id
-        if (fscanf(file, "%d", &r->room_id) != 1) {
-            printf("Error reading room_id for room %d\n", i);
-            free(r);
-            continue;
-        }
-
-        // Read connections (door room_ids)
-        for (int j = 0; j < 4; j++) {
-            if (fscanf(file, "%d", &door_room_ids[i][j]) != 1) {
-                printf("Error reading connection %d for room %d\n", j, i);
-                door_room_ids[i][j] = -1;
-            }
-        }
-
-        // Read visited and CheckPoint (instead of has_treasure)
-        if (fscanf(file, "%d %d", &r->visited, &r->CheckPoint) != 2) {
-            printf("Error reading visited and CheckPoint for room %d\n", i);
-        }
-
-        // Read item token
-        char token[20];
-        if (fscanf(file, "%s", token) != 1) {
-            printf("Error reading item token for room %d\n", i);
-        } else if (strcmp(token, "ITEM") == 0) {
-            r->Item = malloc(sizeof(Item));
-            if (r->Item) {
-                if (fscanf(file, "%s %d %d %d", r->Item->naam, &r->Item->hpRestore, &r->Item->staminaRestore, &r->Item->damageBoost) != 4) {
-                    printf("Error reading item data for room %d\n", i);
-                    free(r->Item);
-                    r->Item = NULL;
-                }
-            }
-        } else if (strcmp(token, "NOITEM") != 0) {
-            printf("Fout: Onbekend itemtoken: %s\n", token);
-        }
-
-        // Read monster token
-        if (fscanf(file, "%s", token) != 1) {
-            printf("Error reading monster token for room %d\n", i);
-        } else if (strcmp(token, "MONSTER") == 0) {
-            r->monster = malloc(sizeof(Monster));
-            if (r->monster) {
-                if (fscanf(file, "%s %d %d %d", r->monster->naam, &r->monster->hp, &r->monster->damage, &r->monster->stamina) != 4) {
-                    printf("Error reading monster data for room %d\n", i);
-                    free(r->monster);
-                    r->monster = NULL;
-                }
-            }
-        } else if (strcmp(token, "NOMONSTER") != 0) {
-            printf("Fout: Onbekend monstertoken: %s\n", token);
-        }
-
-        rooms[i] = r;
-    }
-
-    // After all rooms are loaded, assign doors pointers by matching room_ids
-    for (int i = 0; i < count; i++) {
-        if (!rooms[i]) continue;
-        rooms[i]->doorCount = 0;
-        for (int j = 0; j < 4; j++) {
-            int door_id = door_room_ids[i][j];
-            if (door_id == -1) continue;
-            // Find room pointer with matching room_id
-            Room *door_room = NULL;
-            for (int k = 0; k < count; k++) {
-                if (rooms[k] && rooms[k]->room_id == door_id) {
-                    door_room = rooms[k];
-                    break;
-                }
-            }
-            if (door_room && rooms[i]->doorCount < 4) {
-                rooms[i]->doors[rooms[i]->doorCount++] = door_room;
-            }
-        }
-    }
-
-    // Assign rooms array to pointer
-    *rooms_ptr = rooms;
-
-    // Set player currentRoom pointer by matching player_location_id
-    player->currentRoom = NULL;
-    for (int i = 0; i < count; i++) {
-        if (rooms[i] && rooms[i]->room_id == player_location_id) {
-            player->currentRoom = rooms[i];
-            break;
-        }
-    }
-    if (!player->currentRoom && count > 0) {
-        printf("Warning: Player location id %d not found among loaded rooms.\n", player_location_id);
-        player->currentRoom = rooms[0];
-    }
-
-    free(door_room_ids);
+    int room_id;
+    fscanf(file, "%d %d %d %d", &player->hp, &player->damage, &player->stamina, &room_id);
     fclose(file);
-}
 
+    for (int y = 0; y < GRID_HEIGHT; y++) {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (grid[y][x] && grid[y][x]->room_id == room_id) {
+                player->currentRoom = grid[y][x];
+                printf("Game loaded! You're back in room %d.\n", room_id);
+                return;
+            }
+        }
+    }
+    printf("Room ID not found. Load failed.\n");
+}
